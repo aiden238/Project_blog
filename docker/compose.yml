@@ -17,31 +17,5 @@ services:
       retries: 5
     restart: unless-stopped
 
-  outbox_worker:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    container_name: blog_outbox_worker
-    command: uv run python -m src.workers.outbox_dispatcher
-    env_file:
-      - ../.env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
-  scheduler:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    container_name: blog_scheduler
-    command: uv run python -m src.scheduler.main
-    env_file:
-      - ../.env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
 volumes:
   postgres_data:

@@ -5,34 +5,30 @@ description = "기술/AI 인사이트 블로그 자동 초안 생산 + 리서치
 requires-python = ">=3.11"
 
 dependencies = [
-    # HTTP / Feed
-    "httpx>=0.27.0",
-    "feedparser>=6.0.11",
-    # HTML 파싱 / 본문 추출
-    "trafilatura>=1.9.0",
-    "selectolax>=0.3.17",
-    # DB / ORM
+    # Phase 0 - Foundation
     "sqlalchemy>=2.0.0",
     "alembic>=1.13.0",
     "psycopg2-binary>=2.9.9",
-    # 설정
     "pydantic-settings>=2.3.0",
-    # 중복 제거
-    "datasketch>=1.6.5",
-    # 스케줄러
-    "apscheduler>=3.10.4",
-    # YAML / JSON 스키마
     "pyyaml>=6.0.1",
     "jsonschema>=4.23.0",
-    # 로깅
-    "structlog>=24.1.0",
 ]
 
 [project.optional-dependencies]
-llm-commercial = [
+phase1 = [
+    "httpx>=0.27.0",
+    "feedparser>=6.0.11",
+    "trafilatura>=1.9.0",
+    "selectolax>=0.3.17",
+    "datasketch>=1.6.5",
+]
+phase2 = [
     "litellm>=1.40.0",
 ]
-embedding = [
+phase3 = [
+    "apscheduler>=3.10.4",
+]
+phase4 = [
     "sentence-transformers>=3.0.0",
 ]
 dev = [
@@ -45,6 +41,10 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+include = ["pipeline.py"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
@@ -56,3 +56,4 @@ select = ["E", "F", "I"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+cache_dir = "logs/pytest_cache"

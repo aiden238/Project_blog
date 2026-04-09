@@ -120,16 +120,16 @@ cp .env.example .env   # 값 채우기
 docker compose -f docker/compose.yml up -d postgres
 
 # 3. 의존성 설치
-uv sync
+uv sync --no-editable
 
 # 4. DB 마이그레이션
-uv run alembic upgrade head
+uv run --no-editable alembic upgrade head
 
 # 5. 출처 등록
-uv run python -m pipeline sources sync
+uv run --no-editable python -m pipeline sources sync
 
-# 6. 수집 테스트
-uv run python -m pipeline fetch --source openai_blog --dry-run
+# 6. 출처 확인
+uv run --no-editable python -m pipeline sources list
 ```
 
 ---
