@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     logs_dir: Path = Field(default=Path("./logs"))
     auto_publish_threshold: float = Field(default=0.75)
     auto_publish_disabled: bool = Field(default=False)
+    fetch_timeout_sec: int = Field(default=30)
+    fetch_max_retries: int = Field(default=3)
+    fetch_rate_limit_per_hour: int = Field(default=60)
+    fetch_user_agent: str = Field(default="blog-automation-bot/0.1")
 
     @property
     def project_root(self) -> Path:

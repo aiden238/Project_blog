@@ -6,7 +6,9 @@ import sys
 
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.collection import CollectionService, render_collection_result
 from src.db import session_scope
+from src.reporting import build_fetch_health_report
 from src.source_registry import (
     SourceValidationError,
     list_sources,
@@ -34,6 +36,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format",
     )
 
+    fetch_parser = subparsers.add_parser("fetch", help="Collect source content into LocalFS and Postgres")
+    fetch_parser.add_argument("--source", help="Fetch a single source id")
+    fetch_parser.add_argument("--limit", type=int, help="Maximum number of candidates per source")
+    fetch_parser.add_argument("--dry-run", action="store_true", help="Run without writing files or items")
+    fetch_parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="text",
+        help="Output format",
+    )
+
+    report_parser = subparsers.add_parser("report", help="Generate operational reports")
+    report_subparsers = report_parser.add_subparsers(dest="report_command", required=True)
+    report_subparsers.add_parser("fetch-health", help="Show 7-day fetch failure summary")
+
     return parser
 
 
@@ -44,6 +61,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "sources":
             return handle_sources(args)
+        if args.command == "fetch":
+            return handle_fetch(args)
+        if args.command == "report":
+            return handle_report(args)
     except SourceValidationError as error:
         print(f"source validation failed: {error}", file=sys.stderr)
         return 1
@@ -77,6 +98,39 @@ def handle_sources(args: argparse.Namespace) -> int:
             print(json.dumps(payload, indent=2))
         else:
             print(render_sources_table(sources))
+        return 0
+
+    return 1
+
+
+def handle_fetch(args: argparse.Namespace) -> int:
+    with session_scope(commit=not args.dry_run) as session:
+        service = CollectionService(session)
+        result = service.fetch_sources(
+            source_id=args.source,
+            limit=args.limit,
+            dry_run=args.dry_run,
+        )
+
+    if args.format == "json":
+        print(render_collection_result(result))
+    else:
+        print(f"sources_processed: {result.sources_processed}")
+        print(f"candidates_seen: {result.candidates_seen}")
+        print(f"items_written: {result.items_written}")
+        print(f"duplicates_skipped: {result.duplicates_skipped}")
+        print(f"extract_failed: {result.extract_failed}")
+        print(f"suspicious_items: {result.suspicious_items}")
+        print(f"not_modified: {result.not_modified}")
+        print(f"rate_limited: {result.rate_limited}")
+        print(f"robots_blocked: {result.robots_blocked}")
+    return 0
+
+
+def handle_report(args: argparse.Namespace) -> int:
+    if args.report_command == "fetch-health":
+        with session_scope(commit=False) as session:
+            print(build_fetch_health_report(session))
         return 0
 
     return 1

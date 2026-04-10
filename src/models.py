@@ -20,8 +20,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-ITEM_STATUSES = ("raw", "clean", "summarized", "draft_ready", "published")
+ITEM_STATUSES = ("raw", "clean", "extract_failed", "summarized", "draft_ready", "published")
 OUTBOX_STATUSES = ("pending", "processing", "dispatched", "failed", "dead_letter")
+REVIEW_QUEUE_STATUSES = ("open", "resolved", "ignored")
 
 
 def utcnow() -> datetime:
@@ -81,6 +82,13 @@ class Source(Base):
     )
     enabled: Mapped[bool] = mapped_column(nullable=False, server_default=text("true"))
     config_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    etag: Mapped[str | None] = mapped_column(Text)
+    last_modified: Mapped[str | None] = mapped_column(Text)
+    fetch_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        server_default=text("0"),
+    )
     synced_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -103,7 +111,7 @@ class Item(Base):
     __table_args__ = (
         UniqueConstraint("canonical_url", name="uq_items_canonical_url"),
         CheckConstraint(
-            "status IN ('raw', 'clean', 'summarized', 'draft_ready', 'published')",
+            "status IN ('raw', 'clean', 'extract_failed', 'summarized', 'draft_ready', 'published')",
             name="ck_items_status",
         ),
         CheckConstraint("track IN ('A', 'B')", name="ck_items_track"),
@@ -129,6 +137,7 @@ class Item(Base):
         server_default=text("'raw'"),
     )
     score: Mapped[float | None] = mapped_column(Float)
+    content_simhash: Mapped[str | None] = mapped_column(String(16))
     raw_path: Mapped[str | None] = mapped_column(String(1024))
     clean_path: Mapped[str | None] = mapped_column(String(1024))
     summary_path: Mapped[str | None] = mapped_column(String(1024))
@@ -207,6 +216,41 @@ class Outbox(Base):
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
     )
+
+
+class ReviewQueue(Base):
+    __tablename__ = "review_queue"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('open', 'resolved', 'ignored')",
+            name="ck_review_queue_status",
+        ),
+        Index("ix_review_queue_status", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("items.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    reason: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        server_default=text("'open'"),
+    )
+    payload: Mapped[dict[str, Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        server_default=text("'{}'::jsonb"),
+        default=dict,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Metric(Base):

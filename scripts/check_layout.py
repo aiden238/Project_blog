@@ -44,7 +44,7 @@ EXPECTED_TOP_LEVEL_DIRS = {
 }
 GENERAL_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._-]*$")
 RAW_FILENAME_PATTERN = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z_[a-z0-9_]+_[a-f0-9]{12}\.[a-z0-9]+$"
+    r"^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z_[a-z0-9_]+_[a-f0-9]{12}\.[a-z0-9]+$"
 )
 FORBIDDEN_IN_ROOT = {"secrets.toml"}
 

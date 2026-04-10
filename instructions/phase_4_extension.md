@@ -100,10 +100,11 @@ LiteLLM 어댑터는 `.env`의 `USE_COMMERCIAL_LLM=1`과 사용자 승인 없이
 
 Tistory·pgvector·LiteLLM·S3 미러는 각각 독립 feature flag로 제어한다. 전역 on/off 단일 스위치는 두지 않으며 한 기능 실패가 다른 기능으로 전파되지 않는 격리 구조를 유지한다.
 
-- [ ] 기능별 flag `.env` 키 정의
+- [x] 기능별 flag `.env` 키 정의
 - [ ] 격리 통합 테스트
 - [ ] 장애 전파 차단 검증
 
 ## 변경 기록
 
 - 2026-04-20 초안 작성.
+- 2026-04-26 구현 현황 체크 갱신. Feature flag `.env` 키 정의 항목 반영.

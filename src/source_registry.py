@@ -49,6 +49,7 @@ SOURCE_SCHEMA: dict[str, Any] = {
         },
         "trust": {"type": "number", "minimum": 0, "maximum": 1},
         "auto_publish_allowed": {"type": "boolean"},
+        "respect_robots": {"type": "boolean"},
         "language": {"type": "string", "pattern": "^[a-z]{2}$"},
         "topics": {
             "type": "array",
@@ -192,7 +193,10 @@ def normalize_source_record(document: dict[str, Any]) -> dict[str, Any]:
         "auto_publish_allowed": bool(document["auto_publish_allowed"]),
         "language": document["language"],
         "topics": document["topics"],
-        "fetch_config": document["fetch"],
+        "fetch_config": {
+            **document["fetch"],
+            "respect_robots": bool(document.get("respect_robots", True)),
+        },
         "extract_config": document["extract"],
         "dedupe_config": document["dedupe"],
         "post_rules": document["post_rules"],

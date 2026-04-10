@@ -24,11 +24,14 @@ SessionLocal = sessionmaker(
 
 
 @contextmanager
-def session_scope() -> Iterator[Session]:
+def session_scope(*, commit: bool = True) -> Iterator[Session]:
     session = SessionLocal()
     try:
         yield session
-        session.commit()
+        if commit:
+            session.commit()
+        else:
+            session.rollback()
     except Exception:
         session.rollback()
         raise
