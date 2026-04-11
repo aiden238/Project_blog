@@ -1,0 +1,7 @@
+Generate concise tags for the following technical source.
+
+Title: {title}
+Body:
+{body}
+
+Return 3 to 6 lowercase tags as a comma-separated list.

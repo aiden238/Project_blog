@@ -64,3 +64,10 @@ def write_clean_document(path: Path, payload: dict[str, Any]) -> str:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2)
     return str(path.resolve())
+
+
+def write_text_document(path: Path, payload: str) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        handle.write(payload)
+    return str(path.resolve())

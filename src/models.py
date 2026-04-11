@@ -19,9 +19,16 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-
-ITEM_STATUSES = ("raw", "clean", "extract_failed", "summarized", "draft_ready", "published")
-OUTBOX_STATUSES = ("pending", "processing", "dispatched", "failed", "dead_letter")
+ITEM_STATUSES = (
+    "raw",
+    "clean",
+    "extract_failed",
+    "llm_failed",
+    "summarized",
+    "draft_ready",
+    "published",
+)
+OUTBOX_STATUSES = ("pending", "processing", "sent", "failed", "dead")
 REVIEW_QUEUE_STATUSES = ("open", "resolved", "ignored")
 
 
@@ -108,10 +115,14 @@ class Source(Base):
 
 class Item(Base):
     __tablename__ = "items"
+    item_status_constraint = (
+        "status IN "
+        "('raw', 'clean', 'extract_failed', 'llm_failed', 'summarized', 'draft_ready', 'published')"
+    )
     __table_args__ = (
         UniqueConstraint("canonical_url", name="uq_items_canonical_url"),
         CheckConstraint(
-            "status IN ('raw', 'clean', 'extract_failed', 'summarized', 'draft_ready', 'published')",
+            item_status_constraint,
             name="ck_items_status",
         ),
         CheckConstraint("track IN ('A', 'B')", name="ck_items_track"),
@@ -170,7 +181,7 @@ class Outbox(Base):
     __tablename__ = "outbox"
     __table_args__ = (
         CheckConstraint(
-            "status IN ('pending', 'processing', 'dispatched', 'failed', 'dead_letter')",
+            "status IN ('pending', 'processing', 'sent', 'failed', 'dead')",
             name="ck_outbox_status",
         ),
         Index("ix_outbox_status", "status"),

@@ -1,0 +1,10 @@
+Summarize the shared theme across these source items.
+
+Cluster name: {cluster_name}
+Items:
+{items}
+
+Write a compact cluster description in Korean with:
+1. common thread
+2. key differences
+3. why the cluster matters

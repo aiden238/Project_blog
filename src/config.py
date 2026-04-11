@@ -25,6 +25,17 @@ class Settings(BaseSettings):
     fetch_max_retries: int = Field(default=3)
     fetch_rate_limit_per_hour: int = Field(default=60)
     fetch_user_agent: str = Field(default="blog-automation-bot/0.1")
+    ollama_base_url: str = Field(default="http://localhost:11434")
+    ollama_model: str = Field(default="gemma3:12b")
+    ollama_temperature: float = Field(default=0.3)
+    ollama_max_tokens: int = Field(default=2048)
+    ollama_timeout_sec: int = Field(default=120)
+    ollama_max_retries: int = Field(default=3)
+    notion_token: str | None = Field(default=None)
+    notion_database_id: str | None = Field(default=None)
+    use_commercial_llm: bool = Field(default=False)
+    outbox_max_attempts: int = Field(default=5)
+    outbox_batch_size: int = Field(default=10)
 
     @property
     def project_root(self) -> Path:

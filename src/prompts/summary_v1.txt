@@ -1,0 +1,9 @@
+Summarize the following technical source in Korean.
+
+Title: {title}
+Body:
+{body}
+
+Return:
+1. one-paragraph summary
+2. three bullet takeaways

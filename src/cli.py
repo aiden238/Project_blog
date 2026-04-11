@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.collection import CollectionService, render_collection_result
 from src.db import session_scope
+from src.drafting import DraftService
 from src.reporting import build_fetch_health_report
 from src.source_registry import (
     SourceValidationError,
@@ -36,11 +37,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format",
     )
 
-    fetch_parser = subparsers.add_parser("fetch", help="Collect source content into LocalFS and Postgres")
+    fetch_parser = subparsers.add_parser(
+        "fetch",
+        help="Collect source content into LocalFS and Postgres",
+    )
     fetch_parser.add_argument("--source", help="Fetch a single source id")
     fetch_parser.add_argument("--limit", type=int, help="Maximum number of candidates per source")
-    fetch_parser.add_argument("--dry-run", action="store_true", help="Run without writing files or items")
     fetch_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run without writing files or items",
+    )
+    fetch_parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="text",
+        help="Output format",
+    )
+
+    draft_parser = subparsers.add_parser("draft", help="Generate drafts from clean items")
+    draft_parser.add_argument("--source", help="Generate drafts for a single source id")
+    draft_parser.add_argument("--limit", type=int, help="Maximum items to draft")
+    draft_parser.add_argument("--dry-run", action="store_true", help="Run without writing drafts")
+    draft_parser.add_argument(
         "--format",
         choices=("json", "text"),
         default="text",
@@ -63,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
             return handle_sources(args)
         if args.command == "fetch":
             return handle_fetch(args)
+        if args.command == "draft":
+            return handle_draft(args)
         if args.command == "report":
             return handle_report(args)
     except SourceValidationError as error:
@@ -134,3 +155,26 @@ def handle_report(args: argparse.Namespace) -> int:
         return 0
 
     return 1
+
+
+def handle_draft(args: argparse.Namespace) -> int:
+    with session_scope(commit=not args.dry_run) as session:
+        service = DraftService(session)
+        result = service.generate_drafts(
+            source_id=args.source,
+            limit=args.limit,
+            dry_run=args.dry_run,
+        )
+
+    payload = {
+        "items_seen": result.items_seen,
+        "drafts_written": result.drafts_written,
+        "llm_failed": result.llm_failed,
+        "outbox_enqueued": result.outbox_enqueued,
+    }
+    if args.format == "json":
+        print(json.dumps(payload, indent=2))
+    else:
+        for key, value in payload.items():
+            print(f"{key}: {value}")
+    return 0
