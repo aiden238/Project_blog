@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: blog_postgres
+    environment:
+      POSTGRES_USER: blog_user
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: blog_automation
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog_user -d blog_automation"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  outbox_worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: blog_outbox_worker
+    command: uv run python -m src.workers.outbox_dispatcher
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: blog_scheduler
+    command: uv run python -m src.scheduler.main
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

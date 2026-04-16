@@ -1,0 +1,36 @@
+id: github_releases_llm
+track: A
+kind: github_release
+# repo 목록은 fetch.repos로 관리
+endpoint: https://api.github.com/repos/{repo}/releases/latest
+license_class: first_party
+trust: 0.85
+auto_publish_allowed: false
+language: en
+topics:
+  - open-source
+  - llm
+  - tooling
+
+fetch:
+  interval: 12h
+  etag: true
+  timeout_sec: 30
+  rate_limit: 30
+  repos:
+    - huggingface/transformers
+    - ollama/ollama
+    - ggerganov/llama.cpp
+
+extract:
+  strategy: trafilatura
+
+dedupe:
+  key: canonical_url
+  near_dup: simhash
+
+post_rules:
+  min_words: 100
+  require_code_or_figure: false
+
+enabled: true

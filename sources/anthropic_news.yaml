@@ -1,0 +1,32 @@
+id: anthropic_news
+track: A
+kind: rss
+endpoint: https://www.anthropic.com/rss.xml
+license_class: first_party
+trust: 0.95
+auto_publish_allowed: false
+language: en
+topics:
+  - llm
+  - safety
+  - research
+  - product
+
+fetch:
+  interval: 6h
+  etag: true
+  timeout_sec: 30
+  rate_limit: 60
+
+extract:
+  strategy: trafilatura
+
+dedupe:
+  key: canonical_url
+  near_dup: simhash
+
+post_rules:
+  min_words: 300
+  require_code_or_figure: false
+
+enabled: true
